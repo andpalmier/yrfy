@@ -1,0 +1,114 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: yrfy
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: yrfy
+    main: .
+    binary: yrfy
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+
+homebrew_casks:
+  - name: yrfy
+    repository:
+      owner: andpalmier
+      name: homebrew-tap
+    homepage: "https://github.com/andpalmier/yrfy"
+    description: "CLI tool to interact with YARAify API"
+    directory: Casks
+    url:
+      verified: github.com/andpalmier/yrfy
+    binaries:
+      - yrfy
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/yrfy"]
+          end
+
+dockers:
+  - image_templates:
+      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-amd64"
+      - "ghcr.io/andpalmier/yrfy:latest-amd64"
+    use: buildx
+    goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/amd64"
+    ids:
+      - yrfy
+    extra_files: []
+  - image_templates:
+      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-arm64"
+      - "ghcr.io/andpalmier/yrfy:latest-arm64"
+    use: buildx
+    goos: linux
+    goarch: arm64
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm64"
+    ids:
+      - yrfy
+    extra_files: []
+
+docker_manifests:
+  - name_template: "ghcr.io/andpalmier/yrfy:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-amd64"
+      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/andpalmier/yrfy:latest"
+    image_templates:
+      - "ghcr.io/andpalmier/yrfy:latest-amd64"
+      - "ghcr.io/andpalmier/yrfy:latest-arm64"
+
+release:
+  github:
+    owner: andpalmier
+    name: yrfy
+  draft: false
+  prerelease: auto
