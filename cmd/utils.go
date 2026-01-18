@@ -123,10 +123,6 @@ func printVerbose(message string) {
 	fmt.Printf("[VERBOSE] %s\n", message)
 }
 
-func printSuccess(message string) {
-	fmt.Println(message)
-}
-
 func printJSON(data interface{}) {
 	b, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
@@ -142,7 +138,7 @@ func contains(s, substr string) bool {
 
 func SetVerbose(v bool) {
 	verbose = v
-	InitLogger(v)
+	// InitLogger(v)
 }
 
 func IsVerbose() bool {

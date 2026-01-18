@@ -98,7 +98,7 @@ func (c *Client) MakeRequest(ctx context.Context, payload interface{}) (string, 
 	if err != nil {
 		return "", fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("API returned status %s", resp.Status)
@@ -172,7 +172,7 @@ func (c *Client) UploadFile(ctx context.Context, filePath string, options *ScanO
 	if err != nil {
 		return "", fmt.Errorf("request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("API returned status %s", resp.Status)
@@ -212,7 +212,7 @@ func (c *Client) MakeRequestRaw(ctx context.Context, payload interface{}) (io.Re
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		return nil, fmt.Errorf("API returned status %s", resp.Status)
 	}
 

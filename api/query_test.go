@@ -11,7 +11,7 @@ import (
 func TestClient_LookupHash(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `{
+		_, _ = fmt.Fprintln(w, `{
 			"query_status": "ok",
 			"data": {
 				"metadata": {
@@ -37,7 +37,7 @@ func TestClient_LookupHash(t *testing.T) {
 func TestClient_GetYaraResults(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `{
+		_, _ = fmt.Fprintln(w, `{
 			"query_status": "ok",
 			"data": [
 				{

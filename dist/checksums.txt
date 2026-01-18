@@ -1,6 +1,0 @@
-31658e2811c64e07d84dd691f7a163575bd2c0b069478c687db9620dce2ebb9e  yrfy_0.0.0-SNAPSHOT-none_darwin_amd64.tar.gz
-00a79a10ff2e643950575af46e4bdbe338e87508ee55e2ff3db80012ab4d70aa  yrfy_0.0.0-SNAPSHOT-none_darwin_arm64.tar.gz
-e3c288df56b7a94626ffa9453fb27995ba81b4a95050a5cb05707b8d89135ac6  yrfy_0.0.0-SNAPSHOT-none_linux_amd64.tar.gz
-75b08ea5d29aed12ce7521f81645d17ff34950aabb6364ace8efdadb34d2b8b6  yrfy_0.0.0-SNAPSHOT-none_linux_arm64.tar.gz
-285d1c13908044b30d0c02cbfa95ea2bef0fa1476e2def3571ee8b45a48e3abc  yrfy_0.0.0-SNAPSHOT-none_windows_amd64.zip
-ea9621940ea53bb378cf5b1fd53224f5a31d8283ffe2f411dc93255e22f3fde7  yrfy_0.0.0-SNAPSHOT-none_windows_arm64.zip
