@@ -125,7 +125,11 @@ func (c *Client) UploadFile(ctx context.Context, filePath string, options *ScanO
 	if err != nil {
 		return "", fmt.Errorf("opening file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: error closing file: %v\n", err)
+		}
+	}()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
