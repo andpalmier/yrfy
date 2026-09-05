@@ -25,8 +25,10 @@ A command-line tool for interacting with the [YARAify API](https://yaraify.abuse
 ### Using Homebrew
 
 ```bash
-brew install andpalmier/tap/yrfy
+brew install --cask andpalmier/tap/yrfy
 ```
+
+Homebrew casks are macOS only. On Linux, use `go install` or a pre-built binary.
 
 ### Using Go
 
