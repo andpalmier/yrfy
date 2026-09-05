@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -54,8 +55,8 @@ func TestCheckStatusUnwrapsGenericError(t *testing.T) {
 	if err.Error() != "the API does not recognise that query type" {
 		t.Errorf("got %q, want the explanation for unknown_query", err.Error())
 	}
-	se, ok := err.(*StatusError)
-	if !ok || se.Code != "unknown_query" {
+	var se *StatusError
+	if !errors.As(err, &se) || se.Code != "unknown_query" {
 		t.Errorf("the specific code should stay available, got %+v", err)
 	}
 }

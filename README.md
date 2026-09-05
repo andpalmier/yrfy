@@ -8,7 +8,7 @@ A command-line client for the [YARAify API](https://yaraify.abuse.ch/api/). It s
 > - [yrfy](https://github.com/andpalmier/yrfy) for YARAify, YARA scanning
 > - [mbzr](https://github.com/andpalmier/mbzr) for MalwareBazaar, malware samples
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/andpalmier/yrfy)](https://goreportcard.com/report/github.com/andpalmier/yrfy)
+[![CI](https://github.com/andpalmier/yrfy/actions/workflows/ci.yml/badge.svg)](https://github.com/andpalmier/yrfy/actions/workflows/ci.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ## Features
