@@ -212,3 +212,64 @@ func ParseIdentifierResponse(data []byte) (*IdentifierResponse, error) {
 	}
 	return &resp, nil
 }
+
+// RescanResponse is the answer to a rescan_file request. A successful rescan
+// reports query_status "queued". file_size and sightings arrive quoted, so
+// both are json.Number.
+type RescanResponse struct {
+	QueryStatus string `json:"query_status"`
+	Data        struct {
+		TaskID      string      `json:"task_id"`
+		MD5Hash     string      `json:"md5_hash"`
+		SHA256Hash  string      `json:"sha256_hash"`
+		SHA1Hash    string      `json:"sha1_hash"`
+		SHA3384Hash string      `json:"sha3_384_hash"`
+		FileSize    json.Number `json:"file_size"`
+		FileName    string      `json:"file_name"`
+		MimeType    string      `json:"mime_type"`
+		FirstSeen   string      `json:"first_seen"`
+		Sightings   json.Number `json:"sightings"`
+	} `json:"data"`
+}
+
+// YARARule describes a rule deployed on YARAhub
+type YARARule struct {
+	TimeStamp              string  `json:"time_stamp"`
+	YARAHubUUID            string  `json:"yarahub_uuid"`
+	RuleName               string  `json:"rule_name"`
+	Author                 *string `json:"author"`
+	Description            *string `json:"description"`
+	Date                   *string `json:"date"`
+	YARAHubLicense         *string `json:"yarahub_license"`
+	YARAHubRuleMatchingTLP *string `json:"yarahub_rule_matching_tlp"`
+	YARAHubRuleSharingTLP  *string `json:"yarahub_rule_sharing_tlp"`
+	YARAHubReferenceLink   *string `json:"yarahub_reference_link"`
+	YARAHubReferenceMD5    *string `json:"yarahub_reference_md5"`
+	YARAHubAuthorTwitter   *string `json:"yarahub_author_twitter"`
+	MalpediaFamily         *string `json:"malpedia_family"`
+}
+
+// YARARuleListResponse is the answer to recent_yararules and
+// show_deployed_yara_rules
+type YARARuleListResponse struct {
+	QueryStatus string     `json:"query_status"`
+	Data        []YARARule `json:"data,omitempty"`
+}
+
+// ParseRescanResponse parses the raw JSON response into a RescanResponse
+func ParseRescanResponse(data []byte) (*RescanResponse, error) {
+	var resp RescanResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// ParseYARARuleListResponse parses the raw JSON response into a YARARuleListResponse
+func ParseYARARuleListResponse(data []byte) (*YARARuleListResponse, error) {
+	var resp YARARuleListResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}

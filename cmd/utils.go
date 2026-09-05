@@ -12,7 +12,12 @@ import (
 )
 
 // verbose controls verbose output mode
-var verbose bool
+var (
+	verbose bool
+	// requestTimeout bounds a single API request. YARAify scans files, which
+	// takes longer than a plain lookup, so the default is generous.
+	requestTimeout = 120 * time.Second
+)
 
 // printRootHelp displays the help message for the root command
 func printRootHelp() {
@@ -26,11 +31,15 @@ func printRootHelp() {
 	fmt.Println("Available Commands:")
 	fmt.Println("  scan               Scan a file with YARAify")
 	fmt.Println("  task               Query task results by task ID")
+	fmt.Println("  rescan             Rescan a file YARAify already holds")
+	fmt.Println("  download           Download a file or its unpacked form")
+	fmt.Println("  rules              List, download or delete YARA rules on YARAhub")
 	fmt.Println("  query              Query by hash, YARA rule, ClamAV signature, etc.")
 	fmt.Println("  version            Show version information")
 	fmt.Println()
 	fmt.Println("Global Flags:")
 	fmt.Println("  -v, --verbose      Enable verbose output")
+	fmt.Println("  -t, --timeout      Per-request timeout (default 30s, e.g. 2m)")
 	fmt.Println("  -V, --version      Show version information")
 	fmt.Println("  -h, --help         Show this help message")
 	fmt.Println()
@@ -70,17 +79,15 @@ func getAPIClient() (*api.Client, error) {
 		printVerbose("Creating API client")
 	}
 
-	return api.NewClient(apiKey), nil
+	return api.NewClient(apiKey, api.WithTimeout(requestTimeout)), nil
 }
 
 func getContext() (context.Context, context.CancelFunc) {
-	timeout := 120 * time.Second // Longer timeout for file scans
-
 	if verbose {
-		printVerbose(fmt.Sprintf("Setting request timeout to %v", timeout))
+		printVerbose(fmt.Sprintf("Setting request timeout to %v", requestTimeout))
 	}
 
-	return context.WithTimeout(context.Background(), timeout)
+	return context.WithTimeout(context.Background(), requestTimeout)
 }
 
 func printUsageHeader(command, description string) {
@@ -99,17 +106,9 @@ func printDetailedError(err error, context string) {
 	}
 
 	errStr := err.Error()
-	suggestions := map[string]string{
-		"Unauthorized":       "Set ABUSECH_API_KEY environment variable\n          export ABUSECH_API_KEY=your_key_here",
-		"API key":            "Set ABUSECH_API_KEY environment variable\n          export ABUSECH_API_KEY=your_key_here",
-		"timeout":            "The request timed out. Try again or check your network connection",
-		"deadline exceeded":  "The request timed out. Try again or check your network connection",
-		"connection refused": "Cannot reach API. Check your internet connection",
-	}
-
-	for keyword, solution := range suggestions {
-		if contains(errStr, keyword) {
-			fmt.Fprintf(os.Stderr, "Solution: %s\n", solution)
+	for _, s := range errorSuggestions {
+		if strings.Contains(errStr, s.keyword) {
+			fmt.Fprintf(os.Stderr, "Solution: %s\n", s.solution)
 			break
 		}
 	}
@@ -117,6 +116,20 @@ func printDetailedError(err error, context string) {
 	if verbose {
 		fmt.Fprintf(os.Stderr, "Full error: %+v\n", err)
 	}
+}
+
+// errorSuggestions maps a substring of an error to a suggested fix.
+// Ordered, so the hint shown is the same on every run when several keywords
+// match the same error.
+var errorSuggestions = []struct {
+	keyword  string
+	solution string
+}{
+	{"Unauthorized", "Set ABUSECH_API_KEY environment variable\n          export ABUSECH_API_KEY=your_key_here"},
+	{"API key", "Set ABUSECH_API_KEY environment variable\n          export ABUSECH_API_KEY=your_key_here"},
+	{"timeout", "The request timed out. Try again or check your network connection"},
+	{"deadline exceeded", "The request timed out. Try again or check your network connection"},
+	{"connection refused", "Cannot reach API. Check your internet connection"},
 }
 
 func printVerbose(message string) {
@@ -143,4 +156,14 @@ func SetVerbose(v bool) {
 
 func IsVerbose() bool {
 	return verbose
+}
+
+// SetTimeout sets the per-request timeout
+func SetTimeout(d time.Duration) {
+	requestTimeout = d
+}
+
+// Timeout returns the per-request timeout
+func Timeout() time.Duration {
+	return requestTimeout
 }

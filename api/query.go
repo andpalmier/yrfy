@@ -44,13 +44,13 @@ func (c *Client) GetTaskResults(ctx context.Context, taskID string, malpediaToke
 		return nil, fmt.Errorf("error retrieving task results: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "get_results"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseTaskResultResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil
@@ -76,13 +76,13 @@ func (c *Client) LookupHash(ctx context.Context, hash string, malpediaToken stri
 		return nil, fmt.Errorf("error looking up hash: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "lookup_hash"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseHashLookupResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil
@@ -111,13 +111,13 @@ func (c *Client) QueryYARA(ctx context.Context, ruleName string, resultMax int) 
 		return nil, fmt.Errorf("error querying YARA rule: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "get_yara"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseYARAQueryResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil
@@ -146,13 +146,13 @@ func (c *Client) QueryClamAV(ctx context.Context, signature string, resultMax in
 		return nil, fmt.Errorf("error querying ClamAV signature: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "get_clamav"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseYARAQueryResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil
@@ -178,13 +178,13 @@ func (c *Client) QueryImphash(ctx context.Context, imphash string, resultMax int
 		return nil, fmt.Errorf("error querying imphash: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "get_imphash"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseYARAQueryResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil
@@ -210,13 +210,13 @@ func (c *Client) QueryTLSH(ctx context.Context, tlsh string, resultMax int) (*YA
 		return nil, fmt.Errorf("error querying TLSH: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "get_tlsh"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseYARAQueryResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil
@@ -233,13 +233,13 @@ func (c *Client) GenerateIdentifier(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("error generating identifier: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "generate_identifier"); err != nil {
+		return "", err
+	}
+
 	resp, err := ParseIdentifierResponse([]byte(response))
 	if err != nil {
 		return "", fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return "", fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp.Identifier, nil
@@ -265,13 +265,13 @@ func (c *Client) ListTasks(ctx context.Context, identifier string, taskStatus st
 		return nil, fmt.Errorf("error listing tasks: %w", err)
 	}
 
+	if err := CheckStatus([]byte(response), "list_tasks"); err != nil {
+		return nil, err
+	}
+
 	resp, err := ParseTaskListResponse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
-	}
-
-	if resp.QueryStatus != "ok" {
-		return nil, fmt.Errorf("API returned status: %s", resp.QueryStatus)
 	}
 
 	return resp, nil

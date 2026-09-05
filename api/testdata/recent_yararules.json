@@ -1,0 +1,50 @@
+{
+  "data": [
+    {
+      "author": "classified",
+      "date": "classified",
+      "description": "classified",
+      "malpedia_family": "classified",
+      "rule_name": "classified",
+      "time_stamp": "2026-06-24 21:47:33 UTC",
+      "yarahub_author_twitter": "classified",
+      "yarahub_license": "classified",
+      "yarahub_reference_link": "classified",
+      "yarahub_reference_md5": "classified",
+      "yarahub_rule_matching_tlp": "TLP:RED",
+      "yarahub_rule_sharing_tlp": "TLP:RED",
+      "yarahub_uuid": "e490d509-b2d5-487b-8f9f-d2de7ebcbc1d"
+    },
+    {
+      "author": "Bitsight",
+      "date": "2026-05-04",
+      "description": "StealC infostealer: RC4/Base64 C2 and Chrome ABE v20 bypass",
+      "malpedia_family": null,
+      "rule_name": "win_stealc",
+      "time_stamp": "2026-06-24 12:53:35 UTC",
+      "yarahub_author_twitter": null,
+      "yarahub_license": "CC BY-NC-SA 4.0",
+      "yarahub_reference_link": "https://github.com/bitsight-research/threat_research/tree/main/stealc",
+      "yarahub_reference_md5": "f9e30738b2b0cd581b80596af2e1c884",
+      "yarahub_rule_matching_tlp": "TLP:WHITE",
+      "yarahub_rule_sharing_tlp": "TLP:WHITE",
+      "yarahub_uuid": "8c3364f2-83af-4ac6-9dc1-ec249b4e732c"
+    },
+    {
+      "author": "Bitsight",
+      "date": "2026-04-22",
+      "description": "Detects Amadey v5.55+ payload (x86 and x64): RC4 stream cipher implementation",
+      "malpedia_family": null,
+      "rule_name": "win_amadey",
+      "time_stamp": "2026-06-24 12:53:34 UTC",
+      "yarahub_author_twitter": null,
+      "yarahub_license": "CC BY-NC-SA 4.0",
+      "yarahub_reference_link": "https://github.com/bitsight-research/threat_research/tree/main/amadey",
+      "yarahub_reference_md5": "418dc866e5d2b86187641750dfb87dc0",
+      "yarahub_rule_matching_tlp": "TLP:WHITE",
+      "yarahub_rule_sharing_tlp": "TLP:WHITE",
+      "yarahub_uuid": "f4a2a474-f01a-4841-bdf5-c2106c268439"
+    }
+  ],
+  "query_status": "ok"
+}

@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "dhash_icon": "92264e9e361ccdee",
+      "file_size": 5427200,
+      "first_seen": "2022-04-02 15:12:27 UTC",
+      "gimphash": null,
+      "imphash": null,
+      "last_seen": null,
+      "md5_hash": "6ca7e57dad6a21d1f7aaf1aa030281a1",
+      "mime_type": "application/x-dosexec",
+      "sha1_hash": "66f37a918854e4ded2a335a085a9ea87374deef2",
+      "sha256_hash": "3d30ec7012f3477319137f7637f9879772e5ba3dcfc06dc341e8a4c14ea9598a",
+      "sha3_384_hash": "2fce52c1c52383d4bebc5182f68431c81b241936193a318762bfa3bb8cbce9b9e7ebe8b00b66396c9d0cb61fbb5d7140",
+      "sightings": 1,
+      "ssdeep": "49152:eMdViVljGTvvC4cgeCcjoTkr3VNTqAFikjhpBn36DwkuxG+GgeGVQGouGU0:eKVijz3gXSoTol9vpBWwdRCaG",
+      "telfhash": null,
+      "tlsh": "T137469D12A6624877C37A0730DC6BA274B7F83D1C17FB5763B384B9DAAAB72407464346"
+    },
+    {
+      "dhash_icon": "92264e9e361ccdee",
+      "file_size": 1808896,
+      "first_seen": "2022-04-02 15:05:27 UTC",
+      "gimphash": null,
+      "imphash": "4a99d91e1b68c500bb1244eb377c47a1",
+      "last_seen": null,
+      "md5_hash": "0d0287c298c1e9cf54a0d92b0d75f21a",
+      "mime_type": "application/x-dosexec",
+      "sha1_hash": "fd309ba565157011973275d9cd11841119debb3a",
+      "sha256_hash": "4990abcda7532f88a7ae4b8731c14423260620276cc054b495a2d76c390747f8",
+      "sha3_384_hash": "b0bdf049cccd822baec05f2f74c8ac128eec8a1b8ccef991fbe4537428b667f0ca1055f84f36cb5a0f38fcc4f7b62cb1",
+      "sightings": 1,
+      "ssdeep": "49152:2EPusxhC77OgLE2JqBc+MwlcF4SVJK91t23fPvVD7fZ:SYy73K2UL3tO1fZ",
+      "telfhash": null,
+      "tlsh": "T14E85226344B237EADBB3B1B692389D16F59A6C34C64A8319C381F9762FFDC5641B40E0"
+    }
+  ],
+  "query_info": {
+    "result_count": 6,
+    "result_max": 25,
+    "search_scope": "all time"
+  },
+  "query_status": "ok"
+}

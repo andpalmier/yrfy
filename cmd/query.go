@@ -150,6 +150,9 @@ func executeQuery(args []string) error {
 	clamav := queryCmd.String("clamav", "", "Query by ClamAV signature")
 	imphash := queryCmd.String("imphash", "", "Query by imphash")
 	tlsh := queryCmd.String("tlsh", "", "Query by TLSH")
+	telfhash := queryCmd.String("telfhash", "", "Query by telfhash")
+	gimphash := queryCmd.String("gimphash", "", "Query by gimphash")
+	dhash := queryCmd.String("dhash", "", "Query by icon dhash")
 	limit := queryCmd.Int("limit", 25, "Limit the number of results (max 1000)")
 	malpediaToken := queryCmd.String("malpedia-token", "", "Malpedia token for non-public rules")
 
@@ -161,6 +164,9 @@ func executeQuery(args []string) error {
 		fmt.Println("  -clamav <signature>    Query by ClamAV signature")
 		fmt.Println("  -imphash <hash>        Query by imphash")
 		fmt.Println("  -tlsh <hash>           Query by TLSH")
+		fmt.Println("  -telfhash <hash>       Query by telfhash")
+		fmt.Println("  -gimphash <hash>       Query by gimphash")
+		fmt.Println("  -dhash <hash>          Query by icon dhash")
 		fmt.Println("  -limit <number>        Limit results (default: 25, max: 1000)")
 		fmt.Println("  -malpedia-token <tok>  Malpedia token for TLP:GREEN/AMBER/RED rules")
 		fmt.Println("\nExamples:")
@@ -168,6 +174,7 @@ func executeQuery(args []string) error {
 		fmt.Println("  yrfy query -yara MALWARE_Win_Emotet -limit 50")
 		fmt.Println("  yrfy query -clamav Win.Malware.Emotet")
 		fmt.Println("  yrfy query -imphash 43fd39eb6df6bf3a9a3edd1f646cd16e")
+		fmt.Println("  yrfy query -dhash 92264e9e361ccdee")
 	}
 
 	if len(args) < 1 {
@@ -233,6 +240,36 @@ func executeQuery(args []string) error {
 		result, err := client.QueryTLSH(ctx, *tlsh, *limit)
 		if err != nil {
 			printDetailedError(err, fmt.Sprintf("Failed to query TLSH: %s", *tlsh))
+			return err
+		}
+		printJSON(result)
+		return nil
+	}
+
+	if *telfhash != "" {
+		result, err := client.QueryTelfhash(ctx, *telfhash, *limit)
+		if err != nil {
+			printDetailedError(err, fmt.Sprintf("Failed to query telfhash: %s", *telfhash))
+			return err
+		}
+		printJSON(result)
+		return nil
+	}
+
+	if *gimphash != "" {
+		result, err := client.QueryGimphash(ctx, *gimphash, *limit)
+		if err != nil {
+			printDetailedError(err, fmt.Sprintf("Failed to query gimphash: %s", *gimphash))
+			return err
+		}
+		printJSON(result)
+		return nil
+	}
+
+	if *dhash != "" {
+		result, err := client.QueryDhashIcon(ctx, *dhash, *limit)
+		if err != nil {
+			printDetailedError(err, fmt.Sprintf("Failed to query icon dhash: %s", *dhash))
 			return err
 		}
 		printJSON(result)

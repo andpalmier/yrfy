@@ -27,6 +27,7 @@ type Client struct {
 	httpClient *http.Client
 	interval   time.Duration
 	lastReq    time.Time
+	rulesURL   string
 }
 
 // Option configures the Client
@@ -36,6 +37,14 @@ type Option func(*Client)
 func WithTimeout(timeout time.Duration) Option {
 	return func(c *Client) {
 		c.httpClient.Timeout = timeout
+	}
+}
+
+// WithRulesURL overrides where the full YARA rule archive is fetched from.
+// Only tests should need this.
+func WithRulesURL(url string) Option {
+	return func(c *Client) {
+		c.rulesURL = url
 	}
 }
 
@@ -104,13 +113,13 @@ func (c *Client) MakeRequest(ctx context.Context, payload interface{}) (string, 
 		return "", fmt.Errorf("API returned status %s", resp.Status)
 	}
 
-	limitedReader := io.LimitReader(resp.Body, maxResponseSize)
+	limitedReader := io.LimitReader(resp.Body, maxResponseSize+1)
 	body, err := io.ReadAll(limitedReader)
 	if err != nil {
 		return "", fmt.Errorf("reading response: %w", err)
 	}
 
-	if len(body) == maxResponseSize {
+	if len(body) > maxResponseSize {
 		return "", fmt.Errorf("response too large: exceeded %d bytes", maxResponseSize)
 	}
 
