@@ -145,10 +145,6 @@ func printJSON(data interface{}) {
 	fmt.Println(string(b))
 }
 
-func contains(s, substr string) bool {
-	return strings.Contains(s, substr)
-}
-
 func SetVerbose(v bool) {
 	verbose = v
 	// InitLogger(v)
