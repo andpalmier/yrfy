@@ -61,8 +61,6 @@ homebrew_casks:
     directory: Casks
     url:
       verified: github.com/andpalmier/yrfy
-    binaries:
-      - yrfy
     hooks:
       post:
         install: |
@@ -70,41 +68,28 @@ homebrew_casks:
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/yrfy"]
           end
 
-dockers:
-  - image_templates:
-      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-amd64"
-      - "ghcr.io/andpalmier/yrfy:latest-amd64"
-    use: buildx
-    goos: linux
-    goarch: amd64
+# One "docker buildx build" across both platforms, pushed as a single
+# multi-platform image. A client pulling the tag gets the manifest for its own
+# architecture, so there are no per-architecture tags to publish or stitch back
+# together.
+dockers_v2:
+  - id: yrfy
+    images:
+      - "ghcr.io/andpalmier/yrfy"
+    tags:
+      - "{{ .Version }}"
+      # "latest" must never move onto a prerelease. An empty tag is ignored.
+      - "{{ if not .Prerelease }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
     dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/amd64"
-    ids:
-      - yrfy
-    extra_files: []
-  - image_templates:
-      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-arm64"
-      - "ghcr.io/andpalmier/yrfy:latest-arm64"
-    use: buildx
-    goos: linux
-    goarch: arm64
-    dockerfile: Dockerfile
-    build_flag_templates:
-      - "--platform=linux/arm64"
-    ids:
-      - yrfy
-    extra_files: []
-
-docker_manifests:
-  - name_template: "ghcr.io/andpalmier/yrfy:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-amd64"
-      - "ghcr.io/andpalmier/yrfy:{{ .Version }}-arm64"
-  - name_template: "ghcr.io/andpalmier/yrfy:latest"
-    image_templates:
-      - "ghcr.io/andpalmier/yrfy:latest-amd64"
-      - "ghcr.io/andpalmier/yrfy:latest-arm64"
+    labels:
+      org.opencontainers.image.title: "{{ .ProjectName }}"
+      org.opencontainers.image.description: "CLI tool to interact with YARAify API"
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.source: "https://github.com/andpalmier/yrfy"
+      org.opencontainers.image.licenses: "AGPL-3.0"
 
 release:
   github:
