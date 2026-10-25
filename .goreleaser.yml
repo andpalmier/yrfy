@@ -59,13 +59,16 @@ homebrew_casks:
     homepage: "https://github.com/andpalmier/yrfy"
     description: "CLI tool to interact with YARAify API"
     directory: Casks
-    url:
-      verified: github.com/andpalmier/yrfy
+    # Homebrew quarantines what a cask downloads, and these binaries are neither
+    # signed nor notarized, so macOS refuses to run them with "yrfy is damaged
+    # and cannot be opened". Clearing the quarantine attribute bypasses
+    # Gatekeeper: Apple may withdraw it, and signing plus notarization is the
+    # durable answer, but that needs an Apple Developer account.
     hooks:
       post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/yrfy"]
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/yrfy"]
           end
 
 # One "docker buildx build" across both platforms, pushed as a single

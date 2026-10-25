@@ -63,7 +63,7 @@ export ABUSECH_API_KEY="your_api_key_here"
 yrfy scan -file malware.exe
 ```
 
-Every command reads the key from `ABUSECH_API_KEY`. When a query fails, yrfy prints the reason rather than a bare status code.
+Every command reads the key from `ABUSECH_API_KEY`. When a query fails, yrfy prints the reason the API gave.
 
 ## Usage
 
@@ -176,7 +176,7 @@ yrfy rules -all -out /tmp/yaraify-rules.zip
 yrfy rules -delete bcbf6764-19ae-44f1-adb1-db0d23c100fb
 ```
 
-A rule only appears in listings if its author set `yarahub_rule_matching_tlp` to `TLP:WHITE`, and can only be downloaded if `yarahub_rule_sharing_tlp` is `TLP:WHITE` too. abuse.ch rebuilds the full archive every five minutes, so fetching it more often than that gains you nothing.
+A rule only appears in listings if its author set `yarahub_rule_matching_tlp` to `TLP:WHITE`, and can only be downloaded if `yarahub_rule_sharing_tlp` is `TLP:WHITE` too. abuse.ch rebuilds the full archive every five minutes, so fetching it more often than that gains you nothing. It is the only bulk export YARAify offers.
 
 Deploying a rule is not covered here. The API documentation describes it only by pointing at a sample script, without specifying the request, so yrfy does not guess at it. Upload rules through the YARAify web interface.
 
