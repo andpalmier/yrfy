@@ -130,16 +130,16 @@ yrfy rescan -hash 3cf9260ab6feb907cca7138f8959cbfa
 yrfy query -hash b0bb095dd0ad8b8de1c83b13c38e68dd
 
 # By YARA rule name
-yrfy query -yara MALWARE_Win_Emotet -limit 50
+yrfy query -yara MALWARE_Win_Zegost -limit 50
 
 # By ClamAV signature
-yrfy query -clamav Win.Malware.Emotet
+yrfy query -clamav Win.Dropper.Gh0stRAT-9789289-0
 
 # By structural or fuzzy hash
 yrfy query -imphash 43fd39eb6df6bf3a9a3edd1f646cd16e
-yrfy query -tlsh T138F423C1EB53E7E1C8EF4D38920FFB6546...
+yrfy query -tlsh T1A275AE23E54280FED65820316CB77F3ABDB497595A24CA83A7E8DE791F32251932730D
 yrfy query -telfhash t1dd211d716b2195266ea0cd9088eca7b2512c97072349df33cf31849c24140aeea3ac4f
-yrfy query -gimphash a081e2fab5999d99ed6be718af55e93df171d14bc83c7ca5fdc0907edba0d338c
+yrfy query -gimphash 5991a11452c6bb4cc3acf54e389890017b066d327db0364ed33cef3883db7c01
 yrfy query -dhash 92264e9e361ccdee
 ```
 
@@ -167,7 +167,7 @@ yrfy rules -recent
 yrfy rules -mine
 
 # Print one rule by its YARAhub UUID
-yrfy rules -get 1b95ce79-6034-4740-8e45-5f0840602d1a
+yrfy rules -get f191b5a7-d51e-468a-a360-5ead2e446a33
 
 # Every public rule, as an archive
 yrfy rules -all -out /tmp/yaraify-rules.zip
@@ -191,7 +191,7 @@ podman run --rm -e ABUSECH_API_KEY="your_key" -v $(pwd):/data ghcr.io/andpalmier
 container run --rm -e ABUSECH_API_KEY="your_key" -v $(pwd):/data ghcr.io/andpalmier/yrfy scan -file /data/sample.exe
 
 # A query needs nothing mounted
-docker run --rm -e ABUSECH_API_KEY="your_key" ghcr.io/andpalmier/yrfy query -yara MALWARE_Win_Emotet
+docker run --rm -e ABUSECH_API_KEY="your_key" ghcr.io/andpalmier/yrfy query -yara MALWARE_Win_Zegost
 ```
 
 ## Environment variables

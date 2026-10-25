@@ -171,8 +171,8 @@ func executeQuery(args []string) error {
 		fmt.Println("  -malpedia-token <tok>  Malpedia token for TLP:GREEN/AMBER/RED rules")
 		fmt.Println("\nExamples:")
 		fmt.Println("  yrfy query -hash b0bb095dd0ad8b8de1c83b13c38e68dd")
-		fmt.Println("  yrfy query -yara MALWARE_Win_Emotet -limit 50")
-		fmt.Println("  yrfy query -clamav Win.Malware.Emotet")
+		fmt.Println("  yrfy query -yara MALWARE_Win_Zegost -limit 50")
+		fmt.Println("  yrfy query -clamav Win.Dropper.Gh0stRAT-9789289-0")
 		fmt.Println("  yrfy query -imphash 43fd39eb6df6bf3a9a3edd1f646cd16e")
 		fmt.Println("  yrfy query -dhash 92264e9e361ccdee")
 	}

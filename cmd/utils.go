@@ -57,7 +57,7 @@ func printRootHelp() {
 	fmt.Println("  yrfy query -hash b0bb095dd0ad8b8de1c83b13c38e68dd")
 	fmt.Println()
 	fmt.Println("  # Query by YARA rule")
-	fmt.Println("  yrfy query -yara MALWARE_Win_Emotet -limit 50")
+	fmt.Println("  yrfy query -yara MALWARE_Win_Zegost -limit 50")
 	fmt.Println()
 	fmt.Println("Environment Variables:")
 	fmt.Println("  ABUSECH_API_KEY    Your abuse.ch API key (required)")

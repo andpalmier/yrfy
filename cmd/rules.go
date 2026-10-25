@@ -26,7 +26,7 @@ func executeRules(args []string) error {
 		fmt.Println("  -out <path>      Where to write the archive (default: yaraify-rules.zip)")
 		fmt.Println("\nExamples:")
 		fmt.Println("  yrfy rules -recent")
-		fmt.Println("  yrfy rules -get 1b95ce79-6034-4740-8e45-5f0840602d1a")
+		fmt.Println("  yrfy rules -get f191b5a7-d51e-468a-a360-5ead2e446a33")
 		fmt.Println("  yrfy rules -all -out /tmp/yaraify-rules.zip")
 		fmt.Println("\nOnly rules whose author set yarahub_rule_sharing_tlp to TLP:WHITE")
 		fmt.Println("can be downloaded. abuse.ch rebuilds the full archive every five")
