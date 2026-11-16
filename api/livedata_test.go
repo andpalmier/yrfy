@@ -95,3 +95,17 @@ func TestValidateUUID(t *testing.T) {
 		}
 	}
 }
+
+// Error-shaped data should still produce the API's explanation even when it
+// cannot be decoded into the endpoint's normal response type.
+func TestParseResponseFallsBackToStatus(t *testing.T) {
+	_, err := parseResponse(
+		[]byte(`{"query_status":"error","data":"unknown_query"}`),
+		"whatever",
+		ParseTaskResultResponse,
+		func(r *TaskResultResponse) string { return r.QueryStatus },
+	)
+	if err == nil || err.Error() != "the API does not recognise that query type" {
+		t.Fatalf("parseResponse error = %v, want unknown_query explanation", err)
+	}
+}

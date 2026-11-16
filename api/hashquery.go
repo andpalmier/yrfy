@@ -18,25 +18,21 @@ func (c *Client) queryByHashKind(ctx context.Context, query, searchTerm, label s
 		"search_term": searchTerm,
 	}
 
-	if resultMax > 0 {
+	if resultMax != 0 {
 		if err := ValidateResultMax(resultMax); err != nil {
 			return nil, err
 		}
 		payload["result_max"] = resultMax
 	}
 
-	response, err := c.MakeRequest(ctx, payload)
+	response, err := c.makeRequest(ctx, payload)
 	if err != nil {
 		return nil, fmt.Errorf("error querying %s: %w", label, err)
 	}
 
-	if err := CheckStatus([]byte(response), query); err != nil {
-		return nil, err
-	}
-
-	resp, err := ParseYARAQueryResponse([]byte(response))
+	resp, err := parseResponse(response, query, ParseYARAQueryResponse, func(r *YARAQueryResponse) string { return r.QueryStatus })
 	if err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
+		return nil, err
 	}
 
 	return resp, nil
@@ -64,20 +60,19 @@ func (c *Client) RescanFile(ctx context.Context, hash string) (*RescanResponse, 
 	if hash == "" {
 		return nil, fmt.Errorf("hash cannot be empty")
 	}
+	if err := ValidateHash(hash); err != nil {
+		return nil, err
+	}
 
 	payload := map[string]interface{}{
 		"query": "rescan_file",
 		"hash":  hash,
 	}
 
-	response, err := c.MakeRequest(ctx, payload)
+	response, err := c.makeRequest(ctx, payload)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting rescan: %w", err)
 	}
 
-	if err := CheckStatus([]byte(response), "rescan_file"); err != nil {
-		return nil, err
-	}
-
-	return ParseRescanResponse([]byte(response))
+	return parseResponse(response, "rescan_file", ParseRescanResponse, func(r *RescanResponse) string { return r.QueryStatus })
 }

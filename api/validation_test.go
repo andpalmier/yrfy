@@ -59,3 +59,30 @@ func TestValidateYARARule(t *testing.T) {
 		})
 	}
 }
+
+func TestFileAndInputValidators(t *testing.T) {
+	if err := ValidateFilePath(""); err == nil {
+		t.Error("empty path accepted")
+	}
+	if err := ValidateFilePath("definitely-not-here"); err == nil {
+		t.Error("missing path accepted")
+	}
+	if err := ValidateFilePath(t.TempDir()); err == nil {
+		t.Error("directory accepted as file")
+	}
+	if err := ValidateResultMax(0); err != nil {
+		t.Errorf("result_max=0 should mean the API default: %v", err)
+	}
+	if err := ValidateResultMax(-1); err == nil {
+		t.Error("negative result_max accepted")
+	}
+	if err := ValidateResultMax(1001); err == nil {
+		t.Error("oversized result_max accepted")
+	}
+	if err := ValidateImphash("not-a-hash"); err == nil {
+		t.Error("bad imphash accepted")
+	}
+	if err := ValidateHash("bad"); err == nil {
+		t.Error("bad hash accepted")
+	}
+}

@@ -43,6 +43,18 @@ func (c *Client) downloadSample(ctx context.Context, query, sha256, outPath, suf
 		outPath = fmt.Sprintf("%s%s.zip", sha256, suffix)
 	}
 
+	out, err := openOutput(outPath)
+	if err != nil {
+		return "", err
+	}
+	success := false
+	defer func() {
+		if !success {
+			_ = out.Close()
+			_ = os.Remove(outPath)
+		}
+	}()
+
 	body, err := c.MakeRequestRaw(ctx, map[string]interface{}{
 		"query":       query,
 		"sha256_hash": sha256,
@@ -52,7 +64,14 @@ func (c *Client) downloadSample(ctx context.Context, query, sha256, outPath, suf
 	}
 	defer func() { _ = body.Close() }()
 
-	return writeZip(body, outPath, query)
+	if err := writeZip(body, out, query); err != nil {
+		return "", err
+	}
+	if err := out.Close(); err != nil {
+		return "", fmt.Errorf("error saving file: %w", err)
+	}
+	success = true
+	return outPath, nil
 }
 
 // allRulesURL is where the full YARAhub archive actually lives. The curl
@@ -74,6 +93,18 @@ func (c *Client) DownloadAllRules(ctx context.Context, outPath string) (string, 
 		url = allRulesURL
 	}
 
+	out, err := openOutput(outPath)
+	if err != nil {
+		return "", err
+	}
+	success := false
+	defer func() {
+		if !success {
+			_ = out.Close()
+			_ = os.Remove(outPath)
+		}
+	}()
+
 	c.wait()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -81,9 +112,6 @@ func (c *Client) DownloadAllRules(ctx context.Context, outPath string) (string, 
 		return "", fmt.Errorf("creating request: %w", err)
 	}
 	req.Header.Set("User-Agent", "yrfy-client/1.0")
-	if c.apiKey != "" {
-		req.Header.Set("Auth-Key", c.apiKey)
-	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -95,43 +123,51 @@ func (c *Client) DownloadAllRules(ctx context.Context, outPath string) (string, 
 		return "", fmt.Errorf("API returned status %s", resp.Status)
 	}
 
-	return writeZip(resp.Body, outPath, "download all rules")
+	if err := writeZip(resp.Body, out, "download all rules"); err != nil {
+		return "", err
+	}
+	if err := out.Close(); err != nil {
+		return "", fmt.Errorf("error saving file: %w", err)
+	}
+	success = true
+	return outPath, nil
 }
 
-// writeZip reads a response that should be a ZIP archive and saves it. A body
+// writeZip reads a response that should be a ZIP archive and writes it. A body
 // that is not a ZIP is an error document, which is decoded for its reason.
-func writeZip(body io.Reader, outPath, query string) (string, error) {
+func writeZip(body io.Reader, out io.Writer, query string) error {
 	// io.ReadFull is required here: a plain Read may return fewer bytes than
 	// asked for even when more are available, which would make a valid
 	// archive look like an error response.
 	header := make([]byte, len(zipMagic))
 	n, err := io.ReadFull(body, header)
 	if err != nil && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
-		return "", fmt.Errorf("error reading response header: %w", err)
+		return fmt.Errorf("error reading response header: %w", err)
 	}
 
 	if n < len(zipMagic) || string(header[:n]) != string(zipMagic) {
-		return "", downloadError(header[:n], body, query)
+		return downloadError(header[:n], body, query)
 	}
-
-	if _, err := os.Stat(outPath); err == nil {
-		return "", fmt.Errorf("file already exists: %s", outPath)
-	}
-
-	out, err := os.Create(outPath)
-	if err != nil {
-		return "", fmt.Errorf("error creating file: %w", err)
-	}
-	defer func() { _ = out.Close() }()
 
 	if _, err := out.Write(header[:n]); err != nil {
-		return "", fmt.Errorf("error writing file header: %w", err)
+		return fmt.Errorf("error writing file header: %w", err)
 	}
 	if _, err := io.Copy(out, body); err != nil {
-		return "", fmt.Errorf("error saving file: %w", err)
+		return fmt.Errorf("error saving file: %w", err)
 	}
 
-	return outPath, nil
+	return nil
+}
+
+func openOutput(outPath string) (*os.File, error) {
+	out, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return nil, fmt.Errorf("file already exists: %s", outPath)
+		}
+		return nil, fmt.Errorf("error creating file: %w", err)
+	}
+	return out, nil
 }
 
 // downloadError turns a non-ZIP response body into a useful error

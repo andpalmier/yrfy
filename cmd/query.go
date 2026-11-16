@@ -59,19 +59,22 @@ func executeScan(args []string) error {
 	ctx, cancel := getContext()
 	defer cancel()
 
-	options := &api.ScanOptions{
-		ClamAVScan: 1,
-		ShareFile:  1,
+	clamAVScan, shareFile := 1, 1
+	if *noClamAV {
+		clamAVScan = 0
+	}
+	if *noShare {
+		shareFile = 0
 	}
 
-	if *noClamAV {
-		options.ClamAVScan = 0
+	options := &api.ScanOptions{
+		ClamAVScan:    clamAVScan,
+		ClamAVScanSet: true,
+		ShareFile:     shareFile,
+		ShareFileSet:  true,
 	}
 	if *unpack {
 		options.Unpack = 1
-	}
-	if *noShare {
-		options.ShareFile = 0
 	}
 	if *skipKnown {
 		options.SkipKnown = 1
@@ -185,6 +188,25 @@ func executeQuery(args []string) error {
 
 	if err := queryCmd.Parse(args); err != nil {
 		return err
+	}
+
+	selected := 0
+	for _, on := range []bool{*hash != "", *yara != "", *clamav != "", *imphash != "", *tlsh != "", *telfhash != "", *gimphash != "", *dhash != ""} {
+		if on {
+			selected++
+		}
+	}
+	if selected == 0 {
+		printError("please provide a query parameter (e.g., -hash, -yara, -clamav)")
+		queryCmd.Usage()
+		fmt.Println()
+		return fmt.Errorf("please provide a query parameter")
+	}
+	if selected > 1 {
+		printError("specify only one query parameter")
+		queryCmd.Usage()
+		fmt.Println()
+		return fmt.Errorf("multiple query parameters")
 	}
 
 	client, err := getAPIClient()

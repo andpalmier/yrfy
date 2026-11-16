@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -109,8 +110,10 @@ func TestDownloadRejectsBadHash(t *testing.T) {
 
 func TestDownloadAllRulesUsesRulesURL(t *testing.T) {
 	var path string
+	var authKey string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path = r.URL.Path
+		authKey = r.Header.Get("Auth-Key")
 		_, _ = w.Write(zipBody())
 	}))
 	defer server.Close()
@@ -122,5 +125,62 @@ func TestDownloadAllRulesUsesRulesURL(t *testing.T) {
 	}
 	if path != "/yarahub/yaraify-rules.zip" {
 		t.Errorf("requested %q, want the yarahub archive path", path)
+	}
+	if authKey != "" {
+		t.Errorf("public archive received Auth-Key %q", authKey)
+	}
+}
+
+func TestDownloadAllRulesWorksWithoutKey(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(zipBody())
+	}))
+	defer server.Close()
+
+	c := NewClient("", WithRulesURL(server.URL+"/yarahub/yaraify-rules.zip"))
+	if _, err := c.DownloadAllRules(context.Background(), filepath.Join(t.TempDir(), "rules.zip")); err != nil {
+		t.Fatalf("keyless archive download failed: %v", err)
+	}
+}
+
+func TestDownloadRefusesOverwriteBeforeRequest(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write(zipBody())
+	}))
+	defer server.Close()
+
+	dest := filepath.Join(t.TempDir(), "taken.zip")
+	if err := os.WriteFile(dest, []byte("existing"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	c := NewClient("test-key", WithBaseURL(server.URL+"/"), WithRulesURL(server.URL+"/yarahub/yaraify-rules.zip"))
+	if _, err := c.DownloadFile(context.Background(), dlSHA, dest); err == nil {
+		t.Fatal("expected existing destination to be rejected for a sample download")
+	}
+	if _, err := c.DownloadAllRules(context.Background(), dest); err == nil {
+		t.Fatal("expected existing destination to be rejected for the rules archive")
+	}
+	if got := requests.Load(); got != 0 {
+		t.Errorf("API was contacted %d times for existing destinations", got)
+	}
+}
+
+func TestDownloadFileRemovesPartialFile(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", "100")
+		_, _ = w.Write([]byte("PK\x03\x04partial"))
+	}))
+	defer server.Close()
+
+	c := NewClient("test-key", WithBaseURL(server.URL+"/"))
+	dest := filepath.Join(t.TempDir(), "partial.zip")
+	if _, err := c.DownloadFile(context.Background(), dlSHA, dest); err == nil {
+		t.Fatal("expected an error for a truncated body")
+	}
+	if _, err := os.Stat(dest); !os.IsNotExist(err) {
+		t.Fatalf("partial file was not removed: %v", err)
 	}
 }

@@ -39,7 +39,7 @@ func printRootHelp() {
 	fmt.Println()
 	fmt.Println("Global Flags:")
 	fmt.Println("  -v, --verbose      Enable verbose output")
-	fmt.Println("  -t, --timeout      Per-request timeout (default 30s, e.g. 2m)")
+	fmt.Println("  -t, --timeout      Per-request timeout (default 2m, e.g. 30s)")
 	fmt.Println("  -V, --version      Show version information")
 	fmt.Println("  -h, --help         Show this help message")
 	fmt.Println()
@@ -60,7 +60,7 @@ func printRootHelp() {
 	fmt.Println("  yrfy query -yara MALWARE_Win_Zegost -limit 50")
 	fmt.Println()
 	fmt.Println("Environment Variables:")
-	fmt.Println("  ABUSECH_API_KEY    Your abuse.ch API key (required)")
+	fmt.Println("  ABUSECH_API_KEY    Your abuse.ch API key (required except rules -all)")
 	fmt.Println("                     Get one at https://auth.abuse.ch/")
 	fmt.Println()
 	fmt.Println("For more information about a command:")
@@ -137,12 +137,11 @@ func printVerbose(message string) {
 }
 
 func printJSON(data interface{}) {
-	b, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "    ")
+	if err := enc.Encode(data); err != nil {
 		fmt.Printf("%+v\n", data)
-		return
 	}
-	fmt.Println(string(b))
 }
 
 func SetVerbose(v bool) {

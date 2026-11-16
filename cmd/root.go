@@ -8,29 +8,31 @@ import (
 
 // Execute runs the root command and handles subcommands
 func Execute() error {
+	// Parse global flags only before the subcommand. Otherwise a flag value
+	// such as "-comment -t" would be mistaken for the global timeout flag.
 	args := os.Args[1:]
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
+globals:
+	for len(args) > 0 {
+		switch args[0] {
 		case "-v", "--verbose":
 			SetVerbose(true)
-			args = append(args[:i], args[i+1:]...)
-			i--
+			args = args[1:]
 		case "-V", "--version":
 			return executeVersion([]string{})
 		case "-t", "--timeout":
-			if i+1 >= len(args) {
-				printError("missing value for " + args[i])
+			if len(args) < 2 {
+				printError("missing value for " + args[0])
 				return fmt.Errorf("missing timeout value")
 			}
-			d, err := time.ParseDuration(args[i+1])
+			d, err := time.ParseDuration(args[1])
 			if err != nil || d <= 0 {
-				printError(fmt.Sprintf("invalid timeout %q: use a duration such as 45s or 2m", args[i+1]))
+				printError(fmt.Sprintf("invalid timeout %q: use a duration such as 45s or 2m", args[1]))
 				return fmt.Errorf("invalid timeout")
 			}
 			SetTimeout(d)
-			// Remove flag and its value from args
-			args = append(args[:i], args[i+2:]...)
-			i--
+			args = args[2:]
+		default:
+			break globals
 		}
 	}
 

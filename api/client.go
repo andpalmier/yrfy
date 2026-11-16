@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -27,6 +28,7 @@ type Client struct {
 	httpClient *http.Client
 	interval   time.Duration
 	lastReq    time.Time
+	mu         sync.Mutex // Protects lastReq for thread-safe rate limiting
 	rulesURL   string
 }
 
@@ -76,6 +78,8 @@ func NewClient(apiKey string, options ...Option) *Client {
 
 // wait handles simple rate limiting
 func (c *Client) wait() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	elapsed := time.Since(c.lastReq)
 	if elapsed < c.interval {
 		time.Sleep(c.interval - elapsed)
@@ -83,18 +87,28 @@ func (c *Client) wait() {
 	c.lastReq = time.Now()
 }
 
-// MakeRequest makes an HTTP POST request to the API with JSON body
+// MakeRequest makes an HTTP POST request and returns the response as a string.
+// It is kept for callers that use the exported string API; internal code uses
+// makeRequest to avoid converting the body to a string and back.
 func (c *Client) MakeRequest(ctx context.Context, payload interface{}) (string, error) {
+	body, err := c.makeRequest(ctx, payload)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
+}
+
+func (c *Client) makeRequest(ctx context.Context, payload interface{}) ([]byte, error) {
 	c.wait()
 
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return "", fmt.Errorf("marshaling request: %w", err)
+		return nil, fmt.Errorf("marshaling request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL, bytes.NewReader(jsonData))
 	if err != nil {
-		return "", fmt.Errorf("creating request: %w", err)
+		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -105,74 +119,54 @@ func (c *Client) MakeRequest(ctx context.Context, payload interface{}) (string, 
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("request failed: %w", err)
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API returned status %s", resp.Status)
+		return nil, fmt.Errorf("API returned status %s", resp.Status)
 	}
 
 	limitedReader := io.LimitReader(resp.Body, maxResponseSize+1)
 	body, err := io.ReadAll(limitedReader)
 	if err != nil {
-		return "", fmt.Errorf("reading response: %w", err)
+		return nil, fmt.Errorf("reading response: %w", err)
 	}
 
 	if len(body) > maxResponseSize {
-		return "", fmt.Errorf("response too large: exceeded %d bytes", maxResponseSize)
+		return nil, fmt.Errorf("response too large: exceeded %d bytes", maxResponseSize)
 	}
 
+	return body, nil
+}
+
+// UploadFile uploads a file for scanning and returns the response as a string.
+// It is kept for callers that use the exported string API; internal code uses
+// uploadFile to avoid converting the body to a string and back.
+func (c *Client) UploadFile(ctx context.Context, filePath string, options *ScanOptions) (string, error) {
+	body, err := c.uploadFile(ctx, filePath, options)
+	if err != nil {
+		return "", err
+	}
 	return string(body), nil
 }
 
-// UploadFile uploads a file for scanning
-func (c *Client) UploadFile(ctx context.Context, filePath string, options *ScanOptions) (string, error) {
+func (c *Client) uploadFile(ctx context.Context, filePath string, options *ScanOptions) ([]byte, error) {
 	c.wait()
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		return "", fmt.Errorf("opening file: %w", err)
+		return nil, fmt.Errorf("opening file: %w", err)
 	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			fmt.Printf("Warning: error closing file: %v\n", err)
-		}
-	}()
 
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL, pr)
 	if err != nil {
-		return "", fmt.Errorf("creating form file: %w", err)
-	}
-
-	if _, err := io.Copy(part, file); err != nil {
-		return "", fmt.Errorf("copying file data: %w", err)
-	}
-
-	if options != nil {
-		jsonData, err := json.Marshal(options)
-		if err != nil {
-			return "", fmt.Errorf("marshaling options: %w", err)
-		}
-		jsonPart, err := writer.CreateFormField("json_data")
-		if err != nil {
-			return "", fmt.Errorf("creating json field: %w", err)
-		}
-		if _, err := jsonPart.Write(jsonData); err != nil {
-			return "", fmt.Errorf("writing json data: %w", err)
-		}
-	}
-
-	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("closing multipart writer: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL, body)
-	if err != nil {
-		return "", fmt.Errorf("creating request: %w", err)
+		_ = file.Close()
+		_ = pw.CloseWithError(err)
+		_ = pr.Close()
+		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -181,22 +175,62 @@ func (c *Client) UploadFile(ctx context.Context, filePath string, options *ScanO
 		req.Header.Set("Auth-Key", c.apiKey)
 	}
 
+	go func() {
+		defer func() { _ = file.Close() }()
+		defer func() { _ = pw.Close() }()
+
+		part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+		if err != nil {
+			_ = pw.CloseWithError(fmt.Errorf("creating form file: %w", err))
+			return
+		}
+		if _, err := io.Copy(part, file); err != nil {
+			_ = pw.CloseWithError(fmt.Errorf("copying file data: %w", err))
+			return
+		}
+
+		if options != nil {
+			jsonData, err := json.Marshal(options)
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("marshaling options: %w", err))
+				return
+			}
+			jsonPart, err := writer.CreateFormField("json_data")
+			if err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("creating json field: %w", err))
+				return
+			}
+			if _, err := jsonPart.Write(jsonData); err != nil {
+				_ = pw.CloseWithError(fmt.Errorf("writing json data: %w", err))
+				return
+			}
+		}
+
+		if err := writer.Close(); err != nil {
+			_ = pw.CloseWithError(fmt.Errorf("closing multipart writer: %w", err))
+		}
+	}()
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("request failed: %w", err)
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API returned status %s", resp.Status)
+		return nil, fmt.Errorf("API returned status %s", resp.Status)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	limitedReader := io.LimitReader(resp.Body, maxResponseSize+1)
+	respBody, err := io.ReadAll(limitedReader)
 	if err != nil {
-		return "", fmt.Errorf("reading response: %w", err)
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+	if len(respBody) > maxResponseSize {
+		return nil, fmt.Errorf("response too large: exceeded %d bytes", maxResponseSize)
 	}
 
-	return string(respBody), nil
+	return respBody, nil
 }
 
 // MakeRequestRaw makes an HTTP POST request and returns the raw response body

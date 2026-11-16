@@ -32,18 +32,14 @@ func (c *Client) ShowDeployedYARARules(ctx context.Context) ([]YARARule, error) 
 }
 
 func (c *Client) yaraRuleList(ctx context.Context, query string) ([]YARARule, error) {
-	response, err := c.MakeRequest(ctx, map[string]interface{}{"query": query})
+	response, err := c.makeRequest(ctx, map[string]interface{}{"query": query})
 	if err != nil {
 		return nil, fmt.Errorf("error running %s: %w", query, err)
 	}
 
-	if err := CheckStatus([]byte(response), query); err != nil {
-		return nil, err
-	}
-
-	resp, err := ParseYARARuleListResponse([]byte(response))
+	resp, err := parseResponse(response, query, ParseYARARuleListResponse, func(r *YARARuleListResponse) string { return r.QueryStatus })
 	if err != nil {
-		return nil, fmt.Errorf("error parsing response: %w", err)
+		return nil, err
 	}
 
 	return resp.Data, nil
@@ -64,16 +60,16 @@ func (c *Client) GetYARARule(ctx context.Context, uuid string) (string, error) {
 		"uuid":  uuid,
 	}
 
-	response, err := c.MakeRequest(ctx, payload)
+	response, err := c.makeRequest(ctx, payload)
 	if err != nil {
 		return "", fmt.Errorf("error downloading YARA rule: %w", err)
 	}
 
-	if err := CheckStatus([]byte(response), "get_yara_rule"); err != nil {
+	if err := CheckStatus(response, "get_yara_rule"); err != nil {
 		return "", err
 	}
 
-	return response, nil
+	return string(response), nil
 }
 
 // DeleteYARARule removes one of your own rules from YARAhub. This cannot be
@@ -88,12 +84,12 @@ func (c *Client) DeleteYARARule(ctx context.Context, uuid string) error {
 		"yarahub_uuid": uuid,
 	}
 
-	response, err := c.MakeRequest(ctx, payload)
+	response, err := c.makeRequest(ctx, payload)
 	if err != nil {
 		return fmt.Errorf("error deleting YARA rule: %w", err)
 	}
 
-	if err := CheckStatus([]byte(response), "delete_yara_rule"); err != nil {
+	if err := CheckStatus(response, "delete_yara_rule"); err != nil {
 		return err
 	}
 

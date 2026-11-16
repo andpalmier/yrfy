@@ -54,6 +54,29 @@ func CheckStatus(raw []byte, query string) error {
 	return &StatusError{Status: probe.QueryStatus, Code: code, Query: query}
 }
 
+// parseResponse parses a successful response once. Status checks use the
+// parsed query_status, so the common path does not decode the same body twice.
+// On malformed or error-shaped bodies it falls back to CheckStatus to recover
+// the API's explanation.
+func parseResponse[T any](raw []byte, query string, parse func([]byte) (T, error), status func(T) string) (T, error) {
+	resp, err := parse(raw)
+	if err != nil {
+		var zero T
+		if statusErr := CheckStatus(raw, query); statusErr != nil {
+			return zero, statusErr
+		}
+		return zero, fmt.Errorf("error parsing response: %w", err)
+	}
+
+	switch status(resp) {
+	case "", "ok", "queued":
+		return resp, nil
+	default:
+		var zero T
+		return zero, CheckStatus(raw, query)
+	}
+}
+
 // statusMessages explains the statuses and error codes YARAify returns. The
 // published documentation only lists ok and queued, so the rest were observed
 // against the live API.

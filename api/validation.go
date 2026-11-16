@@ -100,10 +100,11 @@ func ValidateFilePath(path string) error {
 	return nil
 }
 
-// ValidateResultMax checks the result_max parameter
+// ValidateResultMax checks a result_max value. Zero means "use the API
+// default" and is omitted from the request; any supplied value must be 1-1000.
 func ValidateResultMax(max int) error {
-	if max < 1 {
-		return fmt.Errorf("result_max must be at least 1")
+	if max < 0 {
+		return fmt.Errorf("result_max cannot be negative")
 	}
 	if max > 1000 {
 		return fmt.Errorf("result_max cannot exceed 1000")

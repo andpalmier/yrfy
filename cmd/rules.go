@@ -3,6 +3,8 @@ package cmd
 import (
 	"flag"
 	"fmt"
+
+	"github.com/andpalmier/yrfy/api"
 )
 
 // executeRules handles the 'rules' subcommand
@@ -54,6 +56,20 @@ func executeRules(args []string) error {
 		return fmt.Errorf("more than one action selected")
 	}
 
+	if *all {
+		client := api.NewClient("", api.WithTimeout(requestTimeout))
+		ctx, cancel := getContext()
+		defer cancel()
+
+		path, err := client.DownloadAllRules(ctx, *out)
+		if err != nil {
+			printDetailedError(err, "Failed to download the YARA rule archive")
+			return err
+		}
+		fmt.Printf("Rules downloaded successfully: %s\n", path)
+		return nil
+	}
+
 	client, err := getAPIClient()
 	if err != nil {
 		printDetailedError(err, "Failed to create API client")
@@ -98,14 +114,6 @@ func executeRules(args []string) error {
 			return err
 		}
 		fmt.Printf("Deleted YARA rule %s\n", *del)
-
-	case *all:
-		path, err := client.DownloadAllRules(ctx, *out)
-		if err != nil {
-			printDetailedError(err, "Failed to download the YARA rule archive")
-			return err
-		}
-		fmt.Printf("Rules downloaded successfully: %s\n", path)
 	}
 
 	return nil

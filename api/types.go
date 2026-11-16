@@ -2,14 +2,48 @@ package api
 
 import "encoding/json"
 
-// ScanOptions represents options for file scanning
+// ScanOptions represents options for file scanning.
+//
+// ClamAVScan and ShareFile are integers for compatibility with existing
+// callers. Set ClamAVScanSet or ShareFileSet when zero is meaningful; without
+// the Set flag zero is omitted and the API default applies.
 type ScanOptions struct {
-	ClamAVScan int    `json:"clamav_scan,omitempty"`
-	Unpack     int    `json:"unpack,omitempty"`
-	ShareFile  int    `json:"share_file,omitempty"`
-	SkipKnown  int    `json:"skip_known,omitempty"`
-	SkipNoisy  int    `json:"skip_noisy,omitempty"`
-	Identifier string `json:"identifier,omitempty"`
+	ClamAVScan    int    `json:"clamav_scan,omitempty"`
+	Unpack        int    `json:"unpack,omitempty"`
+	ShareFile     int    `json:"share_file,omitempty"`
+	SkipKnown     int    `json:"skip_known,omitempty"`
+	SkipNoisy     int    `json:"skip_noisy,omitempty"`
+	Identifier    string `json:"identifier,omitempty"`
+	ClamAVScanSet bool   `json:"-"`
+	ShareFileSet  bool   `json:"-"`
+}
+
+// MarshalJSON keeps the wire shape unchanged while allowing an explicit zero
+// for the two flags whose API default is one.
+func (o ScanOptions) MarshalJSON() ([]byte, error) {
+	type wireOptions struct {
+		ClamAVScan *int   `json:"clamav_scan,omitempty"`
+		Unpack     int    `json:"unpack,omitempty"`
+		ShareFile  *int   `json:"share_file,omitempty"`
+		SkipKnown  int    `json:"skip_known,omitempty"`
+		SkipNoisy  int    `json:"skip_noisy,omitempty"`
+		Identifier string `json:"identifier,omitempty"`
+	}
+
+	var out wireOptions
+	if o.ClamAVScan != 0 || o.ClamAVScanSet {
+		v := o.ClamAVScan
+		out.ClamAVScan = &v
+	}
+	if o.ShareFile != 0 || o.ShareFileSet {
+		v := o.ShareFile
+		out.ShareFile = &v
+	}
+	out.Unpack = o.Unpack
+	out.SkipKnown = o.SkipKnown
+	out.SkipNoisy = o.SkipNoisy
+	out.Identifier = o.Identifier
+	return json.Marshal(out)
 }
 
 // ScanResponse represents the response from file scan submission
